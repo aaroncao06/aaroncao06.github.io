@@ -1,0 +1,3 @@
+(executable
+ (name website)
+ (libraries website_compiler))

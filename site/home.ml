@@ -3,10 +3,10 @@
 open Website_compiler.Ir
 
 let page : page =
-  { path = "/"
-  ; title = "Aaron Cao"
-  ; body =
-      [ Heading (H1, [ Text "Aaron Cao" ])
-      ; Paragraph [ Text "Hello world" ]
+  page
+    ~path:"/"
+    ~title:"Aaron Cao"
+    ~body:
+      [ heading H1 [ text "Aaron Cao" ]
+      ; paragraph [ text "Hello world" ]
       ]
-  }

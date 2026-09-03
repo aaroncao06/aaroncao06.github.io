@@ -1,7 +1,8 @@
 (* Normalizes website paths before validation and rendering. *)
 
+let normalize_page (page : Ir.page) : (Ir.page, string) result = Ok page (*TODO: normalize path names and urls?*)
+
 let normalize (website : Ir.website) : (Ir.website, string) result =
-  let normalize_page (page : Ir.page) : (Ir.page, string) result = Ok page in
   let rec loop
       (cleaned_pages : Ir.page list)
       (unprocessed_pages : Ir.page list)

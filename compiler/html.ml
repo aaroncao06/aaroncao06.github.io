@@ -79,8 +79,3 @@ let render_page (page : Ir.page) : string =
 <body>%s</body></html>|}
     title
     body
-
-let render_pages (pages: Ir.page list) : (string * string) list = (* map path to rendered string *)
-  List.map 
-    (fun page -> (page_output_path page, render_page page))
-     pages

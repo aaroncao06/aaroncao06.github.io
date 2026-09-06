@@ -32,20 +32,6 @@ let rec index_assets
     else
       index_assets ((path,asset) :: seen_assets) remaining_assets
 
-let rec distinct_page_and_asset_outputs
-  (pages_by_path : (string * Ir.page) list)
-  (assets_by_path : (string * Ir.asset) list)
-  : (unit, string) result
-  =
-  match pages_by_path with
-  | [] -> Ok ()
-  | (_, page) :: remaining_pages ->
-    let output_path = Html.page_output_path page in
-    if List.mem_assoc output_path assets_by_path then
-      Error ("Page and asset output paths collide: " ^ output_path)
-    else
-      distinct_page_and_asset_outputs remaining_pages assets_by_path
-
 let page_valid_internal_references (page: Ir.page) (page_by_path: (string*Ir.page) list) (assets_by_path: (string*Ir.asset) list): (unit, string) result =
   let rec valid_attributes (attributes: Ir.attribute list)  =
     match attributes with
@@ -103,6 +89,5 @@ let validate (website : Ir.website) : (unit, string) result =
   (* syntactic sugar to unwrap result and propagate *)
   let* page_by_path = index_pages [] website.pages in 
   let* assets_by_path = index_assets [] website.assets in 
-  let* () = distinct_page_and_asset_outputs page_by_path assets_by_path in
   valid_internal_references website.pages page_by_path assets_by_path
   

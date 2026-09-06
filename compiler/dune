@@ -1,2 +1,3 @@
 (library
- (name website_compiler))
+ (name website_compiler)
+ (libraries unix))

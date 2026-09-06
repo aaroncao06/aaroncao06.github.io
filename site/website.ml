@@ -7,4 +7,6 @@ let pages : website =
   ; assets= []}
 
 let () =
-  ignore pages
+  match Website_compiler.Compile.run pages with
+  | Ok () -> ()
+  | Error message -> failwith message

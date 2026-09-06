@@ -1,8 +1,30 @@
 (* Defines the typed intermediate representation shared by the site and compiler. *)
 
-type link_target =
-  | Internal of string
+type page_ref = Page_ref of string
+type asset_ref = Asset_ref of string
+type link_ref =
+  | Page of page_ref
+  | Asset of asset_ref
+type +'local target =
+  | Internal of 'local
   | External of string
+type link_target = link_ref target (* can link to either page or an asset *)
+type asset_target = asset_ref target (* links directly to asset *)
+(* 
+internal of page of page ref : link navigating to internal page
+internal of asset of asset ref : link navigating to/downloading internal asset
+internal of page ref : unused
+internal of asset ref : loading internal asset, eg images
+*)
+
+let link_to_page reference = Internal (Page reference)
+let link_to_asset reference = Internal (Asset reference)
+let asset_source reference = Internal reference
+let external_target url = External url
+
+type asset_kind =
+  | Image
+  | File
 
 type heading_level =
   | H1
@@ -23,6 +45,7 @@ type contains_interaction = unit
 type attribute_value =
   | String_value of string
   | Link_value of link_target
+  | Asset_value of asset_kind * asset_target
   | Boolean_value
 
 type attribute =
@@ -64,7 +87,7 @@ let image ~source ~alt () =
   make_void_element
     "img"
     ~attributes:
-      [ { name = "src"; value = Link_value source }
+      [ { name = "src"; value = Asset_value (Image, source) }
       ; { name = "alt"; value = String_value alt }
       ]
     ()
@@ -105,7 +128,20 @@ type page =
   ; body : node list
   }
 
-type website = page list
+type asset =
+  { source_path : string
+  ; output_path : string
+  ; kind : asset_kind}
+
+type website =
+  { pages : page list
+  ; assets : asset list
+  }
+
+let asset ~source_path ~output_path ~kind = { source_path; output_path; kind }
+let source_path asset = asset.source_path
+let output_path asset = asset.output_path
+let kind asset = asset.kind
 
 let page ~path ~title ~body = { path; title; body }
 let path page = page.path
@@ -118,7 +154,7 @@ let map_link_targets transform page =
     match attribute.value with
     | Link_value target ->
       { attribute with value = Link_value (transform target) }
-    | String_value _ | Boolean_value -> attribute
+    | String_value _ | Asset_value _ | Boolean_value -> attribute
   in
   let rec map_node = function
     | Text_node _ as node -> node
@@ -143,3 +179,20 @@ let fold_element ~text ~element root =
         ~is_void
   in
   fold root
+
+
+let iter_elements_result ~text ~element elements =
+  let rec process_node = function
+    | Text_node contents -> text contents
+    | Element_node { tag; attributes; children; is_void } ->
+      match element ~tag ~attributes ~is_void with
+      | Ok () -> process_nodes children
+      | Error _ as error -> error
+  and process_nodes = function
+    | [] -> Ok ()
+    | child::remaining_children ->
+      match process_node child with
+      | Ok () -> process_nodes remaining_children
+      | Error _ as error -> error
+  in
+  process_nodes elements

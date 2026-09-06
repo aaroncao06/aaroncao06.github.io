@@ -3,7 +3,8 @@
 open Website_compiler.Ir
 
 let pages : website =
-  [ Home.page ]
+  { pages= [Home.page]
+  ; assets= []}
 
 let () =
   ignore pages

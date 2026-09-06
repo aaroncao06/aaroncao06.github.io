@@ -1,9 +1,27 @@
 (* Exposes the typed website-building API while hiding its raw tree representation. *)
 
-(* normalize internals but dont need to bother with externals *)
-type link_target =
-  | Internal of string
+type page_ref = Page_ref of string
+type asset_ref = Asset_ref of string
+
+type link_ref =
+  | Page of page_ref
+  | Asset of asset_ref
+
+type +'local target = private
+  | Internal of 'local
   | External of string
+
+type link_target = link_ref target
+type asset_target = asset_ref target
+
+val link_to_page : page_ref -> link_target
+val link_to_asset : asset_ref -> link_target
+val asset_source : asset_ref -> asset_target
+val external_target : string -> 'local target
+
+type asset_kind =
+  | Image
+  | File
 
 type heading_level =
   | H1
@@ -46,7 +64,7 @@ val code :
   ('placement, 'interaction) element
 
 val image :
-  source:link_target ->
+  source:asset_target ->
   alt:string ->
   unit ->
   ('placement, 'interaction) element
@@ -93,7 +111,21 @@ val thematic_break :
   (flow_only, 'interaction) element
 
 type page
-type website = page list
+type asset
+type website =
+  { pages : page list
+  ; assets : asset list
+  }
+
+val asset :
+  source_path:string ->
+  output_path:string ->
+  kind:asset_kind ->
+  asset
+
+val source_path : asset -> string
+val output_path : asset -> string
+val kind : asset -> asset_kind
 
 val page :
   path:string ->
@@ -110,6 +142,7 @@ val map_link_targets : (link_target -> link_target) -> page -> page
 type attribute_value =
   | String_value of string
   | Link_value of link_target
+  | Asset_value of asset_kind * asset_target
   | Boolean_value
 
 type attribute =
@@ -127,3 +160,14 @@ val fold_element :
      'output) ->
   ('placement, 'interaction) element ->
   'output
+
+
+val iter_elements_result :
+  text:(string -> (unit, 'error) result) ->
+  element:
+    (tag:string ->
+     attributes:attribute list ->
+     is_void:bool ->
+     (unit, 'error) result) ->
+  ('placement, 'interaction) element list ->
+  (unit, 'error) result

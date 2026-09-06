@@ -13,8 +13,31 @@ let escape_html (raw_text : string) : string =
     raw_text;
   Buffer.contents output
 
+let render_internal_asset_path path =
+  if String.starts_with ~prefix:"/" path then path else "/" ^ path
+
+let page_output_path (page : Ir.page) : string =
+  let path = Ir.path page in
+  let length = String.length path in
+  let start =
+    if length > 0 && path.[0] = '/' then 1 else 0
+  in
+  let stop =
+    if length > start && path.[length - 1] = '/' then length - 1 else length
+  in
+  let relative_path = String.sub path start (stop - start) in
+  if relative_path = "" then
+    "index.html"
+  else
+    relative_path ^ "/index.html"
+
 let render_link_target : Ir.link_target -> string = function
-  | Internal path -> path
+  | Internal (Page (Page_ref path)) -> path
+  | Internal (Asset (Asset_ref path)) -> render_internal_asset_path path
+  | External url -> url
+
+let render_asset_target : Ir.asset_target -> string = function
+  | Internal (Asset_ref path) -> render_internal_asset_path path
   | External url -> url
 
 let render_attribute (attribute : Ir.attribute) : string =
@@ -26,6 +49,12 @@ let render_attribute (attribute : Ir.attribute) : string =
     ^ attribute.name
     ^ "=\""
     ^ escape_html (render_link_target target)
+    ^ "\""
+  | Asset_value (_, target) ->
+    " "
+    ^ attribute.name
+    ^ "=\""
+    ^ escape_html (render_asset_target target)
     ^ "\""
   | Boolean_value -> " " ^ attribute.name
 
@@ -50,3 +79,8 @@ let render_page (page : Ir.page) : string =
 <body>%s</body></html>|}
     title
     body
+
+let render_pages (pages: Ir.page list) : (string * string) list = (* map path to rendered string *)
+  List.map 
+    (fun page -> (page_output_path page, render_page page))
+     pages

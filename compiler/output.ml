@@ -105,9 +105,60 @@ let copy_file source_path output_path =
     Error
       ("Could not copy " ^ source_path ^ " to " ^ output_path ^ ": " ^ message)
 
-let write ~output_root outputs =
+let rec remove_tree_exn path =
+  match (Unix.lstat path).st_kind with
+  | Unix.S_DIR ->
+    Array.iter
+      (fun name -> remove_tree_exn (Filename.concat path name))
+      (Sys.readdir path);
+    Unix.rmdir path
+  | _ -> Unix.unlink path
+
+let remove_tree path =
+  try
+    remove_tree_exn path;
+    Ok ()
+  with
+  | Unix.Unix_error (Unix.ENOENT, _, _) -> Ok ()
+  | Unix.Unix_error (error, operation, _) ->
+    Error (operation ^ " " ^ path ^ ": " ^ Unix.error_message error)
+  | Sys_error message -> Error ("Could not remove " ^ path ^ ": " ^ message)
+
+let reserve_temporary_path ~directory ~prefix =
+  try
+    let path = Filename.temp_file ~temp_dir:directory prefix "" in
+    Sys.remove path;
+    Ok path
+  with
+  | Sys_error message ->
+    Error ("Could not create a temporary output path: " ^ message)
+
+let rename source destination =
+  try
+    Unix.rename source destination;
+    Ok ()
+  with
+  | Unix.Unix_error (error, operation, _) ->
+    Error
+      (operation
+       ^ " "
+       ^ source
+       ^ " to "
+       ^ destination
+       ^ ": "
+       ^ Unix.error_message error)
+
+let path_exists path =
+  try
+    ignore (Unix.lstat path);
+    Ok true
+  with
+  | Unix.Unix_error (Unix.ENOENT, _, _) -> Ok false
+  | Unix.Unix_error (error, operation, _) ->
+    Error (operation ^ " " ^ path ^ ": " ^ Unix.error_message error)
+
+let write_to_directory ~output_root outputs =
   let ( let* ) = Result.bind in
-  let* () = validate outputs in
   let* () = ensure_directory output_root in
   let rec loop = function
     | [] -> Ok ()
@@ -123,3 +174,71 @@ let write ~output_root outputs =
       loop remaining_outputs
   in
   loop outputs
+
+let cleanup_after_error path message =
+  match remove_tree path with
+  | Ok () -> Error message
+  | Error cleanup_message ->
+    Error (message ^ "; staging cleanup also failed: " ^ cleanup_message)
+
+let replace_output_directory ~staging_root ~output_root =
+  match path_exists output_root with
+  | Error message -> cleanup_after_error staging_root message
+  | Ok false ->
+    (match rename staging_root output_root with
+     | Ok () -> Ok ()
+     | Error message -> cleanup_after_error staging_root message)
+  | Ok true ->
+    let parent = Filename.dirname output_root in
+    match
+      reserve_temporary_path
+        ~directory:parent
+        ~prefix:".website-output-backup-"
+    with
+    | Error message -> cleanup_after_error staging_root message
+    | Ok backup_root ->
+      (match rename output_root backup_root with
+       | Error message -> cleanup_after_error staging_root message
+       | Ok () ->
+         (match rename staging_root output_root with
+          | Ok () ->
+            (match remove_tree backup_root with
+             | Ok () -> Ok ()
+             | Error message ->
+               Error
+                 ("New output was installed, but its old backup could not be removed: "
+                  ^ message))
+          | Error message ->
+            let restoration = rename backup_root output_root in
+            let cleanup = remove_tree staging_root in
+            (match restoration, cleanup with
+             | Ok (), Ok () -> Error message
+             | Error restoration_message, Ok () ->
+               Error
+                 (message
+                  ^ "; restoring the previous output also failed: "
+                  ^ restoration_message)
+             | Ok (), Error cleanup_message ->
+               Error
+                 (message ^ "; staging cleanup also failed: " ^ cleanup_message)
+             | Error restoration_message, Error cleanup_message ->
+               Error
+                 (message
+                  ^ "; restoring the previous output also failed: "
+                  ^ restoration_message
+                  ^ "; staging cleanup also failed: "
+                  ^ cleanup_message))))
+
+let write ~output_root outputs =
+  let ( let* ) = Result.bind in
+  let* () = validate outputs in
+  let parent = Filename.dirname output_root in
+  let* () = ensure_directory parent in
+  let* staging_root =
+    reserve_temporary_path
+      ~directory:parent
+      ~prefix:".website-output-staging-"
+  in
+  match write_to_directory ~output_root:staging_root outputs with
+  | Error message -> cleanup_after_error staging_root message
+  | Ok () -> replace_output_directory ~staging_root ~output_root

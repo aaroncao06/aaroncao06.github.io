@@ -1,0 +1,3 @@
+(test
+ (name compiler_test)
+ (libraries website_compiler unix))

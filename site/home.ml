@@ -6,7 +6,7 @@ let body =
   [ heading H1 [ text "Aaron Cao" ]
   ; paragraph
       [ text
-          "Broadly, I am interested in improving models by generalizing observations about human cognition. But hard problems in general are cool. Current interests: multimodal models, recurrent models, pre-pretraining, programming languages."
+          "I am interested in building and understanding intelligent systems, particularly by drawing on observations about human cognition. But hard problems in general are cool. Current interests: multimodal models, recurrent models, pre-pretraining, programming languages."
       ]
   ; Shared.external_links
   ; thematic_break ()

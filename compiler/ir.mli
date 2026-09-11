@@ -64,6 +64,7 @@ val code :
   ('placement, 'interaction) element
 
 val image :
+  ?width:int ->
   source:asset_target ->
   alt:string ->
   unit ->

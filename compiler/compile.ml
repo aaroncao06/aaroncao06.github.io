@@ -26,4 +26,4 @@ let run (website : Ir.website): (unit, string) result =
   let* normalized_website = Normalize.normalize website in
   let* () = Validate.validate normalized_website in
   let outputs = lower normalized_website in
-  Output.write ~output_root:"dist" outputs
+  Output.write ~output_root:"docs" outputs

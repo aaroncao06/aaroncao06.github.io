@@ -2,11 +2,20 @@
 
 open Website_compiler.Ir
 
+let body =
+  [ heading H1 [ text "Aaron Cao" ]
+  ; paragraph
+      [ text
+          "Broadly, I am interested in improving models by generalizing observations about human cognition. But hard problems in general are cool. Current interests: multimodal models, recurrent models, pre-pretraining, programming languages."
+      ]
+  ; Shared.external_links
+  ; thematic_break ()
+  ]
+  @ Projects.section
+  @ Thoughts.section
+
 let page : page =
   page
     ~path:"/"
     ~title:"Aaron Cao"
-    ~body:
-      [ heading H1 [ text "Aaron Cao" ]
-      ; paragraph [ text "Hello world" ]
-      ]
+    ~body

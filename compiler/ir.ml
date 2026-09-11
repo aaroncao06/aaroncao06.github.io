@@ -83,13 +83,20 @@ let emphasis children = make_element "em" children
 let strong children = make_element "strong" children
 let code children = make_element "code" children
 
-let image ~source ~alt () =
+let image ?width ~source ~alt () =
+  let dimensions =
+    match width with
+    | None -> []
+    | Some width ->
+      [ { name = "width"; value = String_value (string_of_int width) } ]
+  in
   make_void_element
     "img"
     ~attributes:
-      [ { name = "src"; value = Asset_value (Image, source) }
-      ; { name = "alt"; value = String_value alt }
-      ]
+      ( [ { name = "src"; value = Asset_value (Image, source) }
+        ; { name = "alt"; value = String_value alt }
+        ]
+        @ dimensions )
     ()
 
 let line_break () = make_void_element "br" ()

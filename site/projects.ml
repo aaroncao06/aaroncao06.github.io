@@ -21,7 +21,7 @@ let section =
       ; list_item
           [ strong [ text "This website: " ]
           ; text
-              "I hate frontend, so instead of vibe-coding a website, I hand-wrote a website compiler in OCaml that generates HTML from a typed IR. Then, I vibe-coded the site definitions that were fed into it, resulting in this masterpiece. A real source language might come later. "
+              "I hate frontend, so instead of vibe-coding a website, I wrote a website compiler in OCaml that generates HTML from a typed IR. Then, I vibe-coded the site definitions that were fed into it, resulting in this masterpiece. A real source language might come later. "
           ; link
               (external_target
                  "https://github.com/aaroncao06/aaroncao06.github.io")

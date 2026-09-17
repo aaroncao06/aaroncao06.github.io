@@ -23,7 +23,7 @@ let section =
           [ strong [ text "The Shaved Eyebrow Illusion:" ]
           ; paragraph
               [ text
-                  "Consider the following facts. Your eyebrow hairs stay around a certain length. If you shave them, they will grow back to roughly that same length. The exposed hair is dead, so the follicle cannot tell that it was shaved or directly sense how long the hair is."
+                  "Consider the following facts. Your eyebrow hairs stay around a certain length. If you shave them, they will grow back to roughly that same length. The exposed hair is dead, so the follicle cannot tell that it was shaved or sense how long the hair is."
               ]
           ; paragraph
               [ text

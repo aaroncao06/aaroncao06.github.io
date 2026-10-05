@@ -16,7 +16,10 @@ let section =
               (external_target "https://github.com/lightvector/KataGo")
               [ text "KataGo" ]
           ; text
-              ". The AlphaGo documentary was the coolest shit ever. Coding manually is like meditation."
+              ". The AlphaGo documentary was the coolest shit ever. Coding manually is like meditation. Still under development. "
+          ; link
+              (external_target "https://github.com/aaroncao06/rgo")
+              [ text "Code" ]
           ]
       ; list_item
           [ strong [ text "This website: " ]
